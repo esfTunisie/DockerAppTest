@@ -1,0 +1,39 @@
+version: '3'
+networks:
+  app-tier:
+    driver: bridge
+
+services:
+  database:
+    build:
+      context: ../database
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: test_db
+    ports:
+      - "3306:3306"
+    networks:
+      - app-tier
+    volumes:
+      - ../database/init.sql:/init.sql
+  phpfpm:
+    image: ahmedbenmakhlouf/php-fpmproject
+    networks:
+      - app-tier
+  nginx:
+    build:
+      context: ../nginx
+    volumes:
+      - ../src:/var/www
+      - ../nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ../nginx/sites/:/etc/nginx/sites-available
+      - ../nginx/conf.d/:/etc/nginx/conf.d
+      - ../logs:/var/log
+    networks:
+      - app-tier
+    depends_on:
+      - phpfpm
+    ports:
+      - "80:80"
+      - "443:443"
+
